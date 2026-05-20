@@ -110,7 +110,7 @@
 
     function encodeChallengeToken(codeDigits) {
         if (!Array.isArray(codeDigits) || codeDigits.length !== 4) return null;
-        const nonceDigits = Array.from({ length: 4 }, () => randomDigit());
+        const nonceDigits = Array.from({ length: 8 }, () => randomDigit());
         const nonce = nonceDigits.join('');
         const keyDigits = deriveKeyDigits(nonce);
         const obfuscatedDigits = codeDigits.map((digit, i) => (digit + keyDigits[i]) % 10);
@@ -124,13 +124,13 @@
 
         try {
             const payload = fromBase64Url(rawValue);
-            if (!/^1\d{8}$/.test(payload)) return null;
+            if (!/^1\d{12}$/.test(payload)) return null;
 
-            const nonce = payload.slice(1, 5);
+            const nonce = payload.slice(1, 9);
             const keyDigits = deriveKeyDigits(nonce);
-            const obfuscatedDigits = payload.slice(5, 9).split('').map(ch => parseInt(ch, 10));
-            const decrypted = obfuscatedDigits.map((digit, i) => (digit - keyDigits[i] + 10) % 10);
-            return parseChallengeCode(decrypted.join(''));
+            const obfuscatedDigits = payload.slice(9, 13).split('').map(ch => parseInt(ch, 10));
+            const recoveredDigits = obfuscatedDigits.map((digit, i) => (digit - keyDigits[i] + 10) % 10);
+            return parseChallengeCode(recoveredDigits.join(''));
         } catch (e) {
             return null;
         }
