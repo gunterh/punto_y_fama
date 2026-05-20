@@ -6,6 +6,7 @@
     let currentGuess = [];
     let attempts = 0;
     const maxAttempts = 10;
+    const messageDisplayDuration = 2500;
     let gameOver = false;
     let challengeCode = null;
 
@@ -92,7 +93,7 @@
         shareMsg.style.textShadow = isError ? '0 0 4px #ff3333' : '0 0 4px #00ccff';
         setTimeout(() => {
             shareMsg.innerHTML = '&nbsp;';
-        }, 2500);
+        }, messageDisplayDuration);
     }
 
     function extractChallengeCode(inputValue) {
@@ -117,8 +118,12 @@
             await navigator.clipboard.writeText(challengeLink);
             showShareMessage('CHALLENGE LINK COPIED');
         } catch (e) {
-            window.prompt('COPY THIS CHALLENGE LINK', challengeLink);
-            showShareMessage('CHALLENGE LINK READY');
+            if (joinCodeInput) {
+                joinCodeInput.value = challengeLink;
+                joinCodeInput.focus();
+                joinCodeInput.select();
+            }
+            showShareMessage('COPY LINK FROM INPUT FIELD');
         }
     }
 
