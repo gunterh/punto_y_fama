@@ -7,6 +7,7 @@
     let attempts = 0;
     const maxAttempts = 10;
     const messageResetDelayMs = 2500;
+    const blankCellText = '\u00A0';
     let gameOver = false;
     let challengeCode = null;
 
@@ -92,7 +93,7 @@
         shareMsg.style.color = isError ? '#ff3333' : '#00ccff';
         shareMsg.style.textShadow = isError ? '0 0 4px #ff3333' : '0 0 4px #00ccff';
         setTimeout(() => {
-            shareMsg.textContent = '\u00A0';
+            shareMsg.textContent = blankCellText;
         }, messageResetDelayMs);
     }
 
@@ -293,7 +294,7 @@
     }
 
     function clearError() {
-        errorMsg.textContent = '\u00A0';
+        errorMsg.textContent = blankCellText;
     }
 
     // --- Restart Game ---
