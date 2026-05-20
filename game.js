@@ -6,7 +6,7 @@
     let currentGuess = [];
     let attempts = 0;
     const maxAttempts = 10;
-    const messageDisplayDuration = 2500;
+    const messageResetDelayMs = 2500;
     let gameOver = false;
     let challengeCode = null;
 
@@ -92,8 +92,8 @@
         shareMsg.style.color = isError ? '#ff3333' : '#00ccff';
         shareMsg.style.textShadow = isError ? '0 0 4px #ff3333' : '0 0 4px #00ccff';
         setTimeout(() => {
-            shareMsg.innerHTML = '&nbsp;';
-        }, messageDisplayDuration);
+            shareMsg.textContent = '\u00A0';
+        }, messageResetDelayMs);
     }
 
     function extractChallengeCode(inputValue) {
@@ -293,7 +293,7 @@
     }
 
     function clearError() {
-        errorMsg.innerHTML = '&nbsp;';
+        errorMsg.textContent = '\u00A0';
     }
 
     // --- Restart Game ---
@@ -350,9 +350,9 @@
     });
 
     // --- Initialize ---
-    const urlParams = new URLSearchParams(window.location.search);
+    const hasChallengeQuery = new URLSearchParams(window.location.search).has('challenge');
     challengeCode = getChallengeCodeFromQuery();
-    if (urlParams.has('challenge') && !challengeCode) {
+    if (hasChallengeQuery && !challengeCode) {
         setChallengeInUrl(null);
         showShareMessage('INVALID CHALLENGE LINK: STARTED SOLO', true);
     }
