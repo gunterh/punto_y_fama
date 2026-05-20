@@ -73,6 +73,77 @@ header {
     text-shadow: 0 0 5px #00ccff;
 }
 
+.online-panel {
+    border: 1px solid #333;
+    background: rgba(0, 255, 65, 0.04);
+    padding: 10px;
+    margin-bottom: 14px;
+}
+
+.mode-label {
+    display: inline-block;
+    font-size: 0.5rem;
+    color: #ffcc00;
+    text-shadow: 0 0 5px #ffcc00;
+    margin-bottom: 8px;
+}
+
+.online-controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    align-items: center;
+}
+
+.online-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    padding: 9px 7px;
+    background: #1a1a1a;
+    color: #00ff41;
+    border: 2px solid #333;
+    cursor: pointer;
+    text-shadow: 0 0 3px #00ff41;
+}
+
+.online-btn:hover {
+    border-color: #00ff41;
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.online-btn.danger {
+    color: #ff3333;
+    text-shadow: 0 0 3px #ff3333;
+}
+
+.online-btn.danger:hover {
+    border-color: #ff3333;
+    box-shadow: 0 0 8px rgba(255, 51, 51, 0.3);
+}
+
+.join-code-input {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    padding: 9px 7px;
+    border: 2px solid #333;
+    background: #111;
+    color: #00ccff;
+    outline: none;
+}
+
+.join-code-input:focus {
+    border-color: #00ccff;
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.3);
+}
+
+.share-msg {
+    min-height: 18px;
+    margin-top: 8px;
+    font-size: 0.45rem;
+    color: #00ccff;
+    text-shadow: 0 0 4px #00ccff;
+}
+
 @keyframes flicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
         text-shadow:
@@ -366,6 +437,9 @@ header {
 @media (max-width: 400px) {
     .neon-title {
         font-size: 1.2rem;
+    }
+    .online-controls {
+        grid-template-columns: 1fr 1fr;
     }
     .digit-box {
         width: 42px;
