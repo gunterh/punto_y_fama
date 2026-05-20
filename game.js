@@ -332,6 +332,7 @@
     // Keyboard support
     document.addEventListener('keydown', (e) => {
         if (joinCodeInput && document.activeElement === joinCodeInput && e.key === 'Enter') {
+            e.preventDefault();
             joinChallenge();
             return;
         }
