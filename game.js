@@ -66,14 +66,62 @@
         return digits;
     }
 
+    function toBase64Url(value) {
+        return btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function fromBase64Url(value) {
+        const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
+        const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+        return atob(padded);
+    }
+
+    function randomDigit() {
+        if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+            const randomByte = window.crypto.getRandomValues(new Uint8Array(1))[0];
+            return randomByte % 10;
+        }
+        return Math.floor(Math.random() * 10);
+    }
+
+    function encodeChallengeToken(codeDigits) {
+        if (!Array.isArray(codeDigits) || codeDigits.length !== 4) return null;
+        const keyDigits = Array.from({ length: 4 }, () => randomDigit());
+        const encryptedDigits = codeDigits.map((digit, i) => (digit + keyDigits[i]) % 10);
+        const payload = `1${keyDigits.join('')}${encryptedDigits.join('')}`;
+        return toBase64Url(payload);
+    }
+
+    function decodeChallengeToken(rawValue) {
+        const direct = parseChallengeCode(rawValue);
+        if (direct) return direct;
+
+        try {
+            const payload = fromBase64Url(rawValue);
+            if (!/^1\d{8}$/.test(payload)) return null;
+
+            const keyDigits = payload.slice(1, 5).split('').map(ch => parseInt(ch, 10));
+            const encryptedDigits = payload.slice(5, 9).split('').map(ch => parseInt(ch, 10));
+            const decrypted = encryptedDigits.map((digit, i) => (digit - keyDigits[i] + 10) % 10);
+            return parseChallengeCode(decrypted.join(''));
+        } catch (e) {
+            return null;
+        }
+    }
+
     function getChallengeCodeFromQuery(params) {
-        return parseChallengeCode(params.get('challenge'));
+        return decodeChallengeToken(params.get('challenge'));
     }
 
     function setChallengeInUrl(codeDigits) {
         const url = new URL(window.location.href);
         if (codeDigits) {
-            url.searchParams.set('challenge', codeDigits.join(''));
+            const token = encodeChallengeToken(codeDigits);
+            if (token) {
+                url.searchParams.set('challenge', token);
+            } else {
+                url.searchParams.delete('challenge');
+            }
         } else {
             url.searchParams.delete('challenge');
         }
@@ -97,12 +145,12 @@
 
     function extractChallengeCode(inputValue) {
         const raw = String(inputValue || '').trim();
-        const direct = parseChallengeCode(raw);
+        const direct = decodeChallengeToken(raw);
         if (direct) return direct;
 
         try {
             const parsedUrl = new URL(raw);
-            return parseChallengeCode(parsedUrl.searchParams.get('challenge'));
+            return decodeChallengeToken(parsedUrl.searchParams.get('challenge'));
         } catch (e) {
             return null;
         }
@@ -110,7 +158,12 @@
 
     async function shareChallenge() {
         const link = new URL(window.location.href);
-        link.searchParams.set('challenge', secretNumber.join(''));
+        const token = encodeChallengeToken(secretNumber);
+        if (!token) {
+            showShareMessage('FAILED TO CREATE CHALLENGE LINK', true);
+            return;
+        }
+        link.searchParams.set('challenge', token);
         const challengeLink = link.toString();
 
         try {
