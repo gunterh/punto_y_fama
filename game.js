@@ -7,7 +7,7 @@
     let attempts = 0;
     const maxAttempts = 10;
     const messageResetDelayMS = 2500;
-    const challengeCipherSecret = 'PYF_CHALLENGE_V1';
+    const challengeTokenSeed = 'PYF_CHALLENGE_V1';
     let gameOver = false;
     let challengeCode = null;
 
@@ -90,7 +90,7 @@
 
     function deriveKeyDigits(nonce) {
         let state = 2166136261;
-        const seed = `${challengeCipherSecret}:${nonce}`;
+        const seed = `${challengeTokenSeed}:${nonce}`;
         for (let i = 0; i < seed.length; i++) {
             state ^= seed.charCodeAt(i);
             state = Math.imul(state, 16777619) >>> 0;
