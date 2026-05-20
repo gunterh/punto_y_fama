@@ -8,6 +8,8 @@
     const maxAttempts = 10;
     const messageResetDelayMS = 2500;
     const challengeTokenSeed = 'PYF_CHALLENGE_V1';
+    const fnv32OffsetBasis = 2166136261;
+    const fnv32Prime = 16777619;
     let gameOver = false;
     let challengeCode = null;
 
@@ -89,11 +91,11 @@
     }
 
     function deriveKeyDigits(nonce) {
-        let state = 2166136261;
+        let state = fnv32OffsetBasis;
         const seed = `${challengeTokenSeed}:${nonce}`;
         for (let i = 0; i < seed.length; i++) {
             state ^= seed.charCodeAt(i);
-            state = Math.imul(state, 16777619) >>> 0;
+            state = Math.imul(state, fnv32Prime) >>> 0;
         }
 
         const keyDigits = [];
@@ -111,8 +113,8 @@
         const nonceDigits = Array.from({ length: 4 }, () => randomDigit());
         const nonce = nonceDigits.join('');
         const keyDigits = deriveKeyDigits(nonce);
-        const encryptedDigits = codeDigits.map((digit, i) => (digit + keyDigits[i]) % 10);
-        const payload = `1${nonce}${encryptedDigits.join('')}`;
+        const obfuscatedDigits = codeDigits.map((digit, i) => (digit + keyDigits[i]) % 10);
+        const payload = `1${nonce}${obfuscatedDigits.join('')}`;
         return toBase64Url(payload);
     }
 
@@ -126,8 +128,8 @@
 
             const nonce = payload.slice(1, 5);
             const keyDigits = deriveKeyDigits(nonce);
-            const encryptedDigits = payload.slice(5, 9).split('').map(ch => parseInt(ch, 10));
-            const decrypted = encryptedDigits.map((digit, i) => (digit - keyDigits[i] + 10) % 10);
+            const obfuscatedDigits = payload.slice(5, 9).split('').map(ch => parseInt(ch, 10));
+            const decrypted = obfuscatedDigits.map((digit, i) => (digit - keyDigits[i] + 10) % 10);
             return parseChallengeCode(decrypted.join(''));
         } catch (e) {
             return null;
