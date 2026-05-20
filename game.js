@@ -6,7 +6,9 @@
     let currentGuess = [];
     let attempts = 0;
     const maxAttempts = 10;
+    const messageResetDelayMS = 2500;
     let gameOver = false;
+    let challengeCode = null;
 
     // --- DOM Elements ---
     const attemptsDisplay = document.getElementById('attempts-left');
@@ -26,6 +28,12 @@
     const btnRestart = document.getElementById('btn-restart');
     const btnDelete = document.getElementById('btn-delete');
     const btnSubmit = document.getElementById('btn-submit');
+    const modeLabel = document.getElementById('mode-label');
+    const btnShare = document.getElementById('btn-share');
+    const btnJoin = document.getElementById('btn-join');
+    const btnSolo = document.getElementById('btn-solo');
+    const joinCodeInput = document.getElementById('join-code-input');
+    const shareMsg = document.getElementById('share-msg');
 
     // --- Generate Secret Number ---
     function generateSecret() {
@@ -47,6 +55,97 @@
             }
         }
         return result;
+    }
+
+    function parseChallengeCode(rawValue) {
+        const value = String(rawValue || '').trim();
+        if (!/^\d{4}$/.test(value)) return null;
+        const digits = value.split('').map(ch => parseInt(ch, 10));
+        if (digits[0] === 0) return null;
+        if (new Set(digits).size !== 4) return null;
+        return digits;
+    }
+
+    function getChallengeCodeFromQuery(params) {
+        return parseChallengeCode(params.get('challenge'));
+    }
+
+    function setChallengeInUrl(codeDigits) {
+        const url = new URL(window.location.href);
+        if (codeDigits) {
+            url.searchParams.set('challenge', codeDigits.join(''));
+        } else {
+            url.searchParams.delete('challenge');
+        }
+        window.history.replaceState({}, '', url.toString());
+    }
+
+    function setModeLabel() {
+        if (!modeLabel) return;
+        modeLabel.textContent = `MODE: ${challengeCode ? 'FRIEND CHALLENGE' : 'SOLO'}`;
+    }
+
+    function showShareMessage(msg, isError) {
+        if (!shareMsg) return;
+        shareMsg.textContent = msg;
+        shareMsg.style.color = isError ? '#ff3333' : '#00ccff';
+        shareMsg.style.textShadow = isError ? '0 0 4px #ff3333' : '0 0 4px #00ccff';
+        setTimeout(() => {
+            shareMsg.textContent = '';
+        }, messageResetDelayMS);
+    }
+
+    function extractChallengeCode(inputValue) {
+        const raw = String(inputValue || '').trim();
+        const direct = parseChallengeCode(raw);
+        if (direct) return direct;
+
+        try {
+            const parsedUrl = new URL(raw);
+            return parseChallengeCode(parsedUrl.searchParams.get('challenge'));
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function shareChallenge() {
+        const link = new URL(window.location.href);
+        link.searchParams.set('challenge', secretNumber.join(''));
+        const challengeLink = link.toString();
+
+        try {
+            await navigator.clipboard.writeText(challengeLink);
+            showShareMessage('CHALLENGE LINK COPIED');
+        } catch (e) {
+            if (joinCodeInput) {
+                joinCodeInput.value = challengeLink;
+                joinCodeInput.focus();
+                joinCodeInput.select();
+            }
+            showShareMessage('COPY LINK FROM INPUT FIELD');
+        }
+    }
+
+    function joinChallenge() {
+        const code = extractChallengeCode(joinCodeInput ? joinCodeInput.value : '');
+        if (!code) {
+            showShareMessage('INVALID CHALLENGE CODE OR LINK', true);
+            return;
+        }
+
+        challengeCode = code;
+        setChallengeInUrl(challengeCode);
+        if (joinCodeInput) joinCodeInput.value = '';
+        restartGame();
+        showShareMessage('FRIEND CHALLENGE LOADED');
+    }
+
+    function switchToSoloMode() {
+        challengeCode = null;
+        setChallengeInUrl(null);
+        if (joinCodeInput) joinCodeInput.value = '';
+        restartGame();
+        showShareMessage('SOLO MODE ENABLED');
     }
 
     // --- Evaluate Guess ---
@@ -193,12 +292,12 @@
     }
 
     function clearError() {
-        errorMsg.innerHTML = '&nbsp;';
+        errorMsg.textContent = '';
     }
 
     // --- Restart Game ---
     function restartGame() {
-        secretNumber = generateSecret();
+        secretNumber = challengeCode ? [...challengeCode] : generateSecret();
         currentGuess = [];
         attempts = 0;
         gameOver = false;
@@ -212,6 +311,7 @@
         gameOverScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
 
+        setModeLabel();
         updateDigitDisplay();
     }
 
@@ -225,9 +325,17 @@
     btnDelete.addEventListener('click', deleteDigit);
     btnSubmit.addEventListener('click', submitGuess);
     btnRestart.addEventListener('click', restartGame);
+    btnShare.addEventListener('click', shareChallenge);
+    btnJoin.addEventListener('click', joinChallenge);
+    btnSolo.addEventListener('click', switchToSoloMode);
 
     // Keyboard support
     document.addEventListener('keydown', (e) => {
+        if (joinCodeInput && document.activeElement === joinCodeInput && e.key === 'Enter') {
+            e.preventDefault();
+            joinChallenge();
+            return;
+        }
         if (e.key >= '0' && e.key <= '9') {
             addDigit(parseInt(e.key, 10));
         } else if (e.key === 'Backspace') {
@@ -242,5 +350,12 @@
     });
 
     // --- Initialize ---
+    const queryParams = new URLSearchParams(window.location.search);
+    const hasChallengeQuery = queryParams.has('challenge');
+    challengeCode = getChallengeCodeFromQuery(queryParams);
+    if (hasChallengeQuery && !challengeCode) {
+        setChallengeInUrl(null);
+        showShareMessage('INVALID CHALLENGE LINK: STARTED SOLO', true);
+    }
     restartGame();
 })();
