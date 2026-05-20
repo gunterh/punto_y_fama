@@ -7,6 +7,7 @@
     let attempts = 0;
     const maxAttempts = 10;
     const messageResetDelayMS = 2500;
+    const challengeCipherSecret = 'PYF_CHALLENGE_V1';
     let gameOver = false;
     let challengeCode = null;
 
@@ -78,17 +79,40 @@
 
     function randomDigit() {
         if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
-            const randomByte = window.crypto.getRandomValues(new Uint8Array(1))[0];
-            return randomByte % 10;
+            const buffer = new Uint8Array(1);
+            do {
+                window.crypto.getRandomValues(buffer);
+            } while (buffer[0] >= 250);
+            return buffer[0] % 10;
         }
         return Math.floor(Math.random() * 10);
     }
 
+    function deriveKeyDigits(nonce) {
+        let state = 2166136261;
+        const seed = `${challengeCipherSecret}:${nonce}`;
+        for (let i = 0; i < seed.length; i++) {
+            state ^= seed.charCodeAt(i);
+            state = Math.imul(state, 16777619) >>> 0;
+        }
+
+        const keyDigits = [];
+        for (let i = 0; i < 4; i++) {
+            state ^= (state << 13) >>> 0;
+            state ^= state >>> 17;
+            state ^= (state << 5) >>> 0;
+            keyDigits.push((state >>> 0) % 10);
+        }
+        return keyDigits;
+    }
+
     function encodeChallengeToken(codeDigits) {
         if (!Array.isArray(codeDigits) || codeDigits.length !== 4) return null;
-        const keyDigits = Array.from({ length: 4 }, () => randomDigit());
+        const nonceDigits = Array.from({ length: 4 }, () => randomDigit());
+        const nonce = nonceDigits.join('');
+        const keyDigits = deriveKeyDigits(nonce);
         const encryptedDigits = codeDigits.map((digit, i) => (digit + keyDigits[i]) % 10);
-        const payload = `1${keyDigits.join('')}${encryptedDigits.join('')}`;
+        const payload = `1${nonce}${encryptedDigits.join('')}`;
         return toBase64Url(payload);
     }
 
@@ -100,7 +124,8 @@
             const payload = fromBase64Url(rawValue);
             if (!/^1\d{8}$/.test(payload)) return null;
 
-            const keyDigits = payload.slice(1, 5).split('').map(ch => parseInt(ch, 10));
+            const nonce = payload.slice(1, 5);
+            const keyDigits = deriveKeyDigits(nonce);
             const encryptedDigits = payload.slice(5, 9).split('').map(ch => parseInt(ch, 10));
             const decrypted = encryptedDigits.map((digit, i) => (digit - keyDigits[i] + 10) % 10);
             return parseChallengeCode(decrypted.join(''));
