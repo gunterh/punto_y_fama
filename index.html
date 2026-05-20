@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUNTO Y FAMA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scanlines"></div>
+    <div class="container">
+        <header>
+            <h1 class="neon-title">PUNTO Y FAMA</h1>
+            <p class="subtitle">// CRACK THE 4-DIGIT CODE //</p>
+        </header>
+
+        <div id="game-screen" class="screen">
+            <div class="hud">
+                <span class="hud-item">ATTEMPTS: <span id="attempts-left">10</span>/10</span>
+                <span class="hud-item status" id="game-status">PLAYING</span>
+            </div>
+
+            <div id="guess-history" class="history">
+                <!-- Guess rows will be inserted here -->
+            </div>
+
+            <div id="input-area" class="input-area">
+                <div class="digit-display">
+                    <span class="digit-box" id="d0">_</span>
+                    <span class="digit-box" id="d1">_</span>
+                    <span class="digit-box" id="d2">_</span>
+                    <span class="digit-box" id="d3">_</span>
+                </div>
+                <div class="numpad">
+                    <button class="num-btn" data-digit="1">1</button>
+                    <button class="num-btn" data-digit="2">2</button>
+                    <button class="num-btn" data-digit="3">3</button>
+                    <button class="num-btn" data-digit="4">4</button>
+                    <button class="num-btn" data-digit="5">5</button>
+                    <button class="num-btn" data-digit="6">6</button>
+                    <button class="num-btn" data-digit="7">7</button>
+                    <button class="num-btn" data-digit="8">8</button>
+                    <button class="num-btn" data-digit="9">9</button>
+                    <button class="num-btn action-btn" id="btn-delete">DEL</button>
+                    <button class="num-btn" data-digit="0">0</button>
+                    <button class="num-btn action-btn" id="btn-submit">OK</button>
+                </div>
+                <p class="error-msg" id="error-msg">&nbsp;</p>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="screen hidden">
+            <div class="game-over-content">
+                <h2 id="result-title" class="blink"></h2>
+                <p id="result-message"></p>
+                <button id="btn-restart" class="restart-btn">INSERT COIN</button>
+            </div>
+        </div>
+
+        <div class="legend">
+            <span><strong class="fama">F</strong> = Right digit, right place</span>
+            <span><strong class="punto">.</strong> = Right digit, wrong place</span>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
