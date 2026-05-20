@@ -6,8 +6,7 @@
     let currentGuess = [];
     let attempts = 0;
     const maxAttempts = 10;
-    const messageResetDelayMs = 2500;
-    const blankCellText = '\u00A0';
+    const messageResetDelayMS = 2500;
     let gameOver = false;
     let challengeCode = null;
 
@@ -67,8 +66,7 @@
         return digits;
     }
 
-    function getChallengeCodeFromQuery() {
-        const params = new URLSearchParams(window.location.search);
+    function getChallengeCodeFromQuery(params) {
         return parseChallengeCode(params.get('challenge'));
     }
 
@@ -93,8 +91,8 @@
         shareMsg.style.color = isError ? '#ff3333' : '#00ccff';
         shareMsg.style.textShadow = isError ? '0 0 4px #ff3333' : '0 0 4px #00ccff';
         setTimeout(() => {
-            shareMsg.textContent = blankCellText;
-        }, messageResetDelayMs);
+            shareMsg.textContent = '';
+        }, messageResetDelayMS);
     }
 
     function extractChallengeCode(inputValue) {
@@ -294,7 +292,7 @@
     }
 
     function clearError() {
-        errorMsg.textContent = blankCellText;
+        errorMsg.textContent = '';
     }
 
     // --- Restart Game ---
@@ -351,8 +349,9 @@
     });
 
     // --- Initialize ---
-    const hasChallengeQuery = new URLSearchParams(window.location.search).has('challenge');
-    challengeCode = getChallengeCodeFromQuery();
+    const queryParams = new URLSearchParams(window.location.search);
+    const hasChallengeQuery = queryParams.has('challenge');
+    challengeCode = getChallengeCodeFromQuery(queryParams);
     if (hasChallengeQuery && !challengeCode) {
         setChallengeInUrl(null);
         showShareMessage('INVALID CHALLENGE LINK: STARTED SOLO', true);
