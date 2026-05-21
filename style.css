@@ -311,6 +311,32 @@ header {
     50% { opacity: 0; }
 }
 
+.game-over-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.replay-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    padding: 15px 30px;
+    background: transparent;
+    color: #00ccff;
+    border: 3px solid #00ccff;
+    cursor: pointer;
+    text-shadow: 0 0 5px #00ccff;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
+    transition: all 0.2s;
+}
+
+.replay-btn:hover {
+    background: #00ccff;
+    color: #000;
+    box-shadow: 0 0 30px rgba(0, 204, 255, 0.6);
+}
+
 .restart-btn {
     font-family: 'Press Start 2P', monospace;
     font-size: 0.7rem;
@@ -328,6 +354,47 @@ header {
     background: #ffcc00;
     color: #000;
     box-shadow: 0 0 30px rgba(255, 204, 0, 0.6);
+}
+
+.replay-status {
+    font-size: 0.55rem;
+    color: #00ccff;
+    text-shadow: 0 0 5px #00ccff;
+    text-align: center;
+    padding: 10px 0 5px;
+    animation: blinker 1s step-start infinite;
+}
+
+.replay-status .replay-continue {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.5rem;
+    color: #ffcc00;
+    text-shadow: 0 0 5px #ffcc00;
+    animation: blinker 0.8s step-start infinite;
+}
+
+.continue-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    padding: 12px 24px;
+    background: transparent;
+    color: #ffcc00;
+    border: 2px solid #ffcc00;
+    cursor: pointer;
+    text-shadow: 0 0 5px #ffcc00;
+    box-shadow: 0 0 12px rgba(255, 204, 0, 0.3);
+    transition: all 0.2s;
+    display: block;
+    margin: 8px auto 15px;
+    animation: blinker 1s step-start infinite;
+}
+
+.continue-btn:hover {
+    background: #ffcc00;
+    color: #000;
+    box-shadow: 0 0 25px rgba(255, 204, 0, 0.6);
+    animation: none;
 }
 
 /* Legend */

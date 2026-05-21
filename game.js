@@ -7,6 +7,9 @@
     let attempts = 0;
     const maxAttempts = 10;
     let gameOver = false;
+    let moveHistory = [];
+    let replayTimer = null;
+    let replayDone = false;
 
     // --- DOM Elements ---
     const attemptsDisplay = document.getElementById('attempts-left');
@@ -26,6 +29,10 @@
     const btnRestart = document.getElementById('btn-restart');
     const btnDelete = document.getElementById('btn-delete');
     const btnSubmit = document.getElementById('btn-submit');
+    const btnReplay = document.getElementById('btn-replay');
+    const btnContinue = document.getElementById('btn-continue');
+    const inputArea = document.getElementById('input-area');
+    const replayStatus = document.getElementById('replay-status');
 
     // --- Generate Secret Number ---
     function generateSecret() {
@@ -132,6 +139,7 @@
 
         attempts++;
         const result = evaluate(currentGuess, secretNumber);
+        moveHistory.push({ guess: [...currentGuess], famas: result.famas, puntos: result.puntos });
 
         // Add to history
         const row = document.createElement('div');
@@ -198,10 +206,14 @@
 
     // --- Restart Game ---
     function restartGame() {
+        if (replayTimer) { clearTimeout(replayTimer); replayTimer = null; }
+        replayDone = false;
+        btnContinue.classList.add('hidden');
         secretNumber = generateSecret();
         currentGuess = [];
         attempts = 0;
         gameOver = false;
+        moveHistory = [];
 
         attemptsDisplay.textContent = maxAttempts;
         gameStatus.textContent = 'PLAYING';
@@ -211,8 +223,69 @@
 
         gameOverScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
+        inputArea.classList.remove('hidden');
+        replayStatus.classList.add('hidden');
 
         updateDigitDisplay();
+    }
+
+    // --- Replay Game ---
+    function replayGame() {
+        if (replayTimer) { clearTimeout(replayTimer); replayTimer = null; }
+
+        gameOverScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        inputArea.classList.add('hidden');
+        replayStatus.classList.remove('hidden');
+
+        guessHistory.innerHTML = '';
+        attemptsDisplay.textContent = maxAttempts;
+        gameStatus.textContent = 'REPLAY';
+        gameStatus.style.color = '#00ccff';
+
+        let step = 0;
+        const history = moveHistory.slice();
+        replayDone = false;
+
+        function showNextMove() {
+            if (step >= history.length) {
+                replayStatus.innerHTML = '[ REPLAY COMPLETE ]<br><span class="replay-continue">▶ PRESS ENTER OR CONTINUE</span>';
+                replayDone = true;
+                btnContinue.classList.remove('hidden');
+                return;
+            }
+
+            const { guess, famas, puntos } = history[step];
+            step++;
+
+            attemptsDisplay.textContent = maxAttempts - step + 1;
+            replayStatus.textContent = `[ MOVE ${step} / ${history.length} ]`;
+
+            const row = document.createElement('div');
+            row.className = 'history-row';
+            row.innerHTML = `
+                <span class="attempt-num">${String(step).padStart(2, '0')}</span>
+                <span class="guess-digits">${guess.join('')}</span>
+                <span class="feedback">${renderFeedback(famas, puntos)}</span>
+            `;
+            guessHistory.appendChild(row);
+            guessHistory.scrollTop = guessHistory.scrollHeight;
+
+            replayTimer = setTimeout(showNextMove, 1200);
+        }
+
+        replayTimer = setTimeout(showNextMove, 400);
+    }
+
+    // --- Exit Replay ---
+    function exitReplay() {
+        if (!replayDone) return;
+        replayDone = false;
+        btnContinue.classList.add('hidden');
+        gameScreen.classList.add('hidden');
+        gameOverScreen.classList.remove('hidden');
+        inputArea.classList.remove('hidden');
+        replayStatus.classList.add('hidden');
     }
 
     // --- Event Listeners ---
@@ -225,6 +298,8 @@
     btnDelete.addEventListener('click', deleteDigit);
     btnSubmit.addEventListener('click', submitGuess);
     btnRestart.addEventListener('click', restartGame);
+    btnReplay.addEventListener('click', replayGame);
+    btnContinue.addEventListener('click', exitReplay);
 
     // Keyboard support
     document.addEventListener('keydown', (e) => {
@@ -233,9 +308,11 @@
         } else if (e.key === 'Backspace') {
             deleteDigit();
         } else if (e.key === 'Enter') {
-            if (gameOver && !gameOverScreen.classList.contains('hidden')) {
+            if (replayDone) {
+                exitReplay();
+            } else if (gameOver && !gameOverScreen.classList.contains('hidden')) {
                 restartGame();
-            } else {
+            } else if (!inputArea.classList.contains('hidden')) {
                 submitGuess();
             }
         }
