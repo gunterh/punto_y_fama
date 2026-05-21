@@ -30,9 +30,98 @@
     const btnDelete = document.getElementById('btn-delete');
     const btnSubmit = document.getElementById('btn-submit');
     const btnReplay = document.getElementById('btn-replay');
+    const btnShare = document.getElementById('btn-share');
     const btnContinue = document.getElementById('btn-continue');
     const inputArea = document.getElementById('input-area');
     const replayStatus = document.getElementById('replay-status');
+
+    // --- Replay Sharing ---
+    function buildReplayToken(history) {
+        return history.map((move) => move.guess.join('')).join('-');
+    }
+
+    function parseReplayToken(token) {
+        if (!token) return null;
+        const parts = token.split('-').filter(Boolean);
+        if (!parts.length || parts.length > maxAttempts) return null;
+
+        const guesses = [];
+        for (let i = 0; i < parts.length; i++) {
+            const guessStr = parts[i];
+            if (!/^\d{4}$/.test(guessStr)) return null;
+            const digits = guessStr.split('').map((char) => parseInt(char, 10));
+            const unique = new Set(digits);
+            if (unique.size !== 4) return null;
+            guesses.push(digits);
+        }
+
+        return guesses;
+    }
+
+    function parseSecretToken(token) {
+        if (!token || !/^\d{4}$/.test(token)) return null;
+        const digits = token.split('').map((char) => parseInt(char, 10));
+        const unique = new Set(digits);
+        if (unique.size !== 4) return null;
+        return digits;
+    }
+
+    function buildReplayUrl(history) {
+        const token = buildReplayToken(history);
+        const url = new URL(window.location.href);
+        url.searchParams.set('replay', token);
+        url.searchParams.set('secret', secretNumber.join(''));
+        return url.toString();
+    }
+
+    function evaluateReplayGuesses(guesses, sharedSecret) {
+        return guesses.map((guess) => {
+            const result = evaluate(guess, sharedSecret);
+            return { guess: [...guess], famas: result.famas, puntos: result.puntos };
+        });
+    }
+
+    function startSharedReplayFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const replayToken = params.get('replay');
+        const secretToken = params.get('secret');
+        const guesses = parseReplayToken(replayToken);
+        const sharedSecret = parseSecretToken(secretToken);
+        if (!guesses || !sharedSecret) return;
+
+        secretNumber = [...sharedSecret];
+        moveHistory = evaluateReplayGuesses(guesses, sharedSecret);
+        gameOver = true;
+        attempts = moveHistory.length;
+        gameStatus.textContent = 'SHARED REPLAY';
+        gameStatus.style.color = '#00ccff';
+        attemptsDisplay.textContent = Math.max(0, maxAttempts - attempts);
+        guessHistory.innerHTML = '';
+        currentGuess = [];
+        updateDigitDisplay();
+
+        gameOverScreen.classList.remove('hidden');
+        gameScreen.classList.add('hidden');
+        resultTitle.textContent = 'SHARED RUN';
+        resultTitle.className = 'blink win';
+        resultMessage.textContent = `REPLAY WITH ${moveHistory.length} MOVE${moveHistory.length > 1 ? 'S' : ''}`;
+    }
+
+    function shareReplayLink() {
+        if (!moveHistory.length) {
+            showError('NO REPLAY TO SHARE');
+            return;
+        }
+
+        const replayUrl = buildReplayUrl(moveHistory);
+        navigator.clipboard.writeText(replayUrl)
+            .then(() => {
+                resultMessage.textContent = 'REPLAY LINK COPIED';
+            })
+            .catch(() => {
+                resultMessage.textContent = replayUrl;
+            });
+    }
 
     // --- Generate Secret Number ---
     function generateSecret() {
@@ -258,7 +347,7 @@
             const { guess, famas, puntos } = history[step];
             step++;
 
-            attemptsDisplay.textContent = maxAttempts - step + 1;
+            attemptsDisplay.textContent = maxAttempts - step;
             replayStatus.textContent = `[ MOVE ${step} / ${history.length} ]`;
 
             const row = document.createElement('div');
@@ -299,6 +388,7 @@
     btnSubmit.addEventListener('click', submitGuess);
     btnRestart.addEventListener('click', restartGame);
     btnReplay.addEventListener('click', replayGame);
+    btnShare.addEventListener('click', shareReplayLink);
     btnContinue.addEventListener('click', exitReplay);
 
     // Keyboard support
@@ -320,4 +410,5 @@
 
     // --- Initialize ---
     restartGame();
+    startSharedReplayFromUrl();
 })();

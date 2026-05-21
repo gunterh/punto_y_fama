@@ -337,6 +337,25 @@ header {
     box-shadow: 0 0 30px rgba(0, 204, 255, 0.6);
 }
 
+.share-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    padding: 15px 20px;
+    background: transparent;
+    color: #00ff41;
+    border: 3px solid #00ff41;
+    cursor: pointer;
+    text-shadow: 0 0 5px #00ff41;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    transition: all 0.2s;
+}
+
+.share-btn:hover {
+    background: #00ff41;
+    color: #000;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
+}
+
 .restart-btn {
     font-family: 'Press Start 2P', monospace;
     font-size: 0.7rem;
